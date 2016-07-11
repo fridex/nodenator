@@ -1,0 +1,29 @@
+---
+  # output graph style definition - graphviz is used for rendering graphs
+  # conforms to http://www.graphviz.org/doc/info/attrs.html
+  style:
+    node:
+      fontname: 'Helvetica'
+      shape: 'hexagon'
+      fontcolor: 'white'
+      color: 'white'
+      style: 'filled'
+      fillcolor: '#006699'
+
+    edge:
+      style: 'dashed'
+      color: 'white'
+      arrowhead: 'open'
+      fontname: 'Courier'
+      fontsize: '12'
+      fontcolor: 'white'
+
+    graph:
+      label: 'Node dependencies'
+      fontsize: '16'
+      fontcolor: 'white'
+      bgcolor: '#333333'
+      rankdir: 'BT'
+
+  # if you want to define your own predicates module, just modify the following path
+  #predicate-dir: /foo/bar/mypredicates

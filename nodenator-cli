@@ -1,0 +1,119 @@
+#!/bin/env python
+# -*- coding: utf-8 -*-
+# ####################################################################
+# Copyright (C) 2016  Fridolin Pokorny, fpokorny@redhat.com
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# ####################################################################
+
+
+import yaml
+import json
+import argparse
+import coloredlogs
+import logging
+from nodenator.version import nodenator_version
+from nodenator.config import Config
+from nodenator.system import System
+from nodenator.message import Message
+
+if __name__ == "__main__":
+    try:
+        parser = argparse.ArgumentParser(description='path to defs.yaml file')
+        parser.add_argument('--config', dest='config', action='store',
+                            help='config.yaml file', default=None)
+        parser.add_argument('--definition', dest='defs', action='store',
+                            help='defs.yaml file', required=True)
+        parser.add_argument('--dump', dest='dump', action='store_true',
+                            help='generate python code', default=None)
+        parser.add_argument('--evaluate', dest='evaluate', action='store',
+                            help='message JSON path', default=None)
+        parser.add_argument('--check', dest='check', action='store_true',
+                            help='do check defs.yaml file', default=False)
+        parser.add_argument('--graph', dest='graph', action='store',
+                            help='generate a PNG graph representation', default=None)
+        parser.add_argument('--no-color', dest='no_color', action='store_true',
+                            help='do not use colorized output')
+        parser.add_argument('--check-output', dest='check_output', action='store',
+                            help='check message for output restrictions', default=None)
+        parser.add_argument('--check-input', dest='check_input', action='store',
+                            help='check message for input restrictions', default=None)
+        parser.add_argument('--version', dest='version', action='store_true',
+                            help='get version')
+        args = parser.parse_args()
+
+        if not args.no_color:
+            coloredlogs.install()
+
+        Config.set_config(args.config)
+
+        with open(args.defs) as f:
+            defs = yaml.load(f)
+
+        system = System.construct(defs)
+
+        if args.version:
+            print("nodenator v%s - Fridolin Pokorny <fpokorny@redhat.com>" % nodenator_version)
+            exit(0)
+
+        some_work = False
+        if args.check:
+            logging.info("Performing check...")
+            if not system.check():
+                exit(2)
+            some_work = True
+
+        if args.evaluate:
+            logging.info("Evaluating message from file '%s'..." % args.evaluate)
+            with open(args.evaluate) as f:
+                message = json.load(f)
+            system.evaluate(Message.create(message, system))
+            logging.info("Evaluation of message finished")
+            some_work = True
+
+        if args.dump:
+            logging.info("Performing dump...")
+            system.dump()
+            logging.info("Dump successfully finished!")
+            some_work = True
+
+        if args.graph:
+            logging.info("Plotting graph to '%s'..." % args.graph)
+            system.plot_graph(args.graph)
+            some_work = True
+
+        if args.check_input:
+            logging.info("Checking input message correctness")
+            with open(args.check_input) as f:
+                message = json.load(f)
+            if not system.check_node_input(Message.create(message, system)):
+                exit(3)
+            some_work = True
+
+        if args.check_output:
+            logging.info("Checking output message correctness")
+            with open(args.check_output) as f:
+                message = json.load(f)
+            if not system.check_node_output(Message.create(message, system)):
+                exit(4)
+            some_work = True
+
+        if not some_work:
+            parser.print_help()
+            exit(1)
+
+    except Exception as e:
+        logging.error(e.message)
+        raise

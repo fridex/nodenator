@@ -1,0 +1,60 @@
+---
+  nodes:
+    - name: "Task1"
+      desc: "A simple task for demonstration"
+      srcpath: "tmp/task1.py"
+      dump-node-comparison:
+        type: 'instance'
+        import: 'modules.task.mercator'
+      input:
+        name: "alwaysFalse"
+      output:
+        and:
+          - name: "fieldExist"
+            args:
+              key: "test"
+          - name: "fieldBool"
+            args:
+              key: "test"
+
+    - name: "Task2"
+      desc: "Yet another simple task"
+      srcpath: "tmp/task2.py"
+      input:
+        name: "fieldBool"
+        args:
+          key: "test"
+      output:
+        name: "alwaysTrue"
+
+    - name: "Task3"
+      desc: "An orphaned node"
+      srcpath: "tmp/task3.py"
+      input:
+        name: "alwaysFalse"
+      output:
+        name: "alwaysFalse"
+
+  edges:
+    - name: "edge1"
+      desc: "An edge that connects Task1 with Task2"
+      from: "Task1"
+      to: "Task2"
+      condition:
+        or:
+          - name: "alwaysFalse"
+          - and:
+            - not:
+                name: "fieldExist"
+                args:
+                  key: "somenonexistingkeythatwillneveroccur"
+            - name: "fieldEqual"
+              args:
+                key:
+                  - "foo"
+                  - "bar"
+                value: "baz"
+            - name: "fieldEqual"
+              args:
+                key: "test"
+                value: true

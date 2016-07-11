@@ -1,0 +1,5 @@
+build
+dist
+nodenator.egg-info
+*.pyc
+venv
